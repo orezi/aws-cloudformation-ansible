@@ -1,0 +1,19 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+    - name: upload static website to s3 
+      s3: 
+        bucket=orezi-bucket
+        object=landing.html 
+        src=landing.html 
+        mode=put 
+
+    - name: launch ansible cloudformation template
+      cloudformation:
+        stack_name: "orezi-cloudformation"
+        state: "present"
+        region: "us-east-1"
+        disable_rollback: true
+        template: "cloudformation.template"
+        tags:
+          Stack: "orezi-cloudformation"
