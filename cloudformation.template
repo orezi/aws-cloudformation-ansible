@@ -7,21 +7,24 @@
       "Properties" : {
         "EnableDnsSupport" : "true",
         "EnableDnsHostnames" : "true",
-        "CidrBlock" : "10.0.0.0/16"
+        "CidrBlock" : "10.0.0.0/16",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziVpc"} ]
       }
     },
     "OreziPublicSubnet" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "OreziVpc" },
-        "CidrBlock" : "10.0.20.0/24"
+        "CidrBlock" : "10.0.20.0/24",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicSubnet"} ]
       }
     },
     "OreziPrivateSubnet" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "OreziVpc" },
-        "CidrBlock" : "10.0.18.0/24"
+        "CidrBlock" : "10.0.18.0/24",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPrivateSubnet"} ]
       }
     },
 	  "OreziInternetGateway" : {
@@ -37,7 +40,8 @@
 	  "OreziPublicRouteTable" : {
 	    "Type" : "AWS::EC2::RouteTable",
 	    "Properties" : {
-	      "VpcId" : { "Ref" : "OreziVpc" }
+	      "VpcId" : { "Ref" : "OreziVpc" },
+	      "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicRouteTable"} ]
 	    }
 	  },
 	  "OreziPublicRoute" : {
@@ -66,7 +70,8 @@
 			    "DeviceIndex" : "0",
 			    "DeleteOnTermination" : true,
 			    "SubnetId" : { "Ref" : "OreziPrivateSubnet" }
-			  }]
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "OreziPrivateInstance"} ]
 			}
 		}
   }

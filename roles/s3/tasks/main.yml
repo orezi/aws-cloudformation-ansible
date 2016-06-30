@@ -1,11 +1,13 @@
 ---
 - name: create bucket
   s3_bucket:
+    aws_access_key: "{{ aws_access_key_id }}"
+    aws_secret_key: "{{ aws_secret_access_key }}"
     name: orezi-bucket
     policy: "{{ lookup('file','policy.json') }}"
 
 - name: upload static website to s3 
-  s3: 
+  s3:
     bucket=orezi-bucket
     object=landing.html 
     src=landing.html 
