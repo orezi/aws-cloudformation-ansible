@@ -1,0 +1,12 @@
+---
+- name: create machine image
+  ec2_ami:
+    instance_id: i-d15e714d
+    wait: yes
+    name: orezi-ami
+    state: present 
+    region: "us-east-1"
+    tags:
+      Name: orezi-ami
+      Service: test
+  register: instance

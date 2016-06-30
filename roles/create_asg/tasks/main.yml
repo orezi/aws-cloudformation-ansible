@@ -1,0 +1,13 @@
+---
+- name: create autoscaling group
+  ec2_asg:
+    name: orezi-asg
+    region: "us-east-1"
+    launch_config_name: 'orezi-lc'
+    state: present
+    min_size: 1
+    max_size: 3
+    desired_capacity: 1
+    wait_for_instances: no
+    tags:
+      - environment: practice

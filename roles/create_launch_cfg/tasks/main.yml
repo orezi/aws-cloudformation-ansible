@@ -1,0 +1,8 @@
+---
+- name: create launch config
+  ec2_lc:
+    name: orezi-lc
+    region: "us-east-1"
+    image_id: "{{ instance.image_id }}"
+    state: present
+    instance_type: t2.micro

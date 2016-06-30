@@ -1,0 +1,13 @@
+---
+- name: create bucket
+  s3_bucket:
+    name: orezi-bucket
+    policy: "{{ lookup('file','policy.json') }}"
+
+- name: upload static website to s3 
+  s3: 
+    bucket=orezi-bucket
+    object=landing.html 
+    src=landing.html 
+    mode=put 
+    permission=public-read

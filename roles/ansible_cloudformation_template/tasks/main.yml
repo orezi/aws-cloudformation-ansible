@@ -1,0 +1,10 @@
+---
+- name: launch ansible cloudformation template
+  cloudformation:
+    stack_name: "orezi-cloudformation"
+    state: "present"
+    region: "us-east-1"
+    disable_rollback: true
+    template: "cloudformation.template"
+    tags:
+      Stack: "orezi-cloudformation"
