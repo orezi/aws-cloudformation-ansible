@@ -3,11 +3,11 @@
   cloudformation:
     aws_access_key: "{{ aws_access_key_id }}"
     aws_secret_key: "{{ aws_secret_access_key }}"
-    stack_name: "orezi-cloudformation"
+    stack_name: "{{ cloudformation_name }}"
     state: "present"
-    region: "us-east-1"
+    region: "{{ region }}"
     disable_rollback: true
     template: "cloudformation.template"
     tags:
-      Stack: "orezi-cloudformation"
+      Stack: "{{ cloudformation_name }}"
   register: cloudformation

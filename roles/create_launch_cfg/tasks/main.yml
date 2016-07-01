@@ -1,10 +1,16 @@
 ---
+- name: check if launch config exists
+  command: bash -c "aws autoscaling describe-launch-configurations --launch-configuration-names {{ launch_cfg_name }} | grep {{ launch_cfg_name }}"
+  register: launch_cfg_exists
+  ignore_errors: true
+
 - name: create launch config
+  when: launch_cfg_exists|failed
   ec2_lc:
     aws_access_key: "{{ aws_access_key_id }}"
     aws_secret_key: "{{ aws_secret_access_key }}"
-    name: orezi-lc
-    region: "us-east-1"
+    name: "{{ launch_cfg_name }}"
+    region: "{{ region }}"
     image_id: "{{ instance.image_id }}"
     state: present
-    instance_type: t2.micro
+    instance_type: "{{ instance_type }}"

@@ -1,0 +1,42 @@
+---
+- name: check if boto is installed
+  command: bash -c "pip freeze | grep boto==*"
+  register: boto_installed
+  ignore_errors: true
+
+- name: install boto
+  pip: name=boto state=present
+  when: boto_installed|failed
+
+- name: check if aws is installed
+  command: bash -c "aws --version 2>&1 | grep aws-cli*"
+  register: aws_installed
+  ignore_errors: true
+
+- name: install aws-cli
+  pip: name=awscli state=present
+  when: aws_installed|failed
+
+- name: create .aws dir under user home for awscli config
+  when: aws_installed|failed
+  file:
+    path: "{{ ansible_env.HOME }}/.aws"
+    state: directory
+    owner: "{{ ANSIBLE_USER }}"
+    mode: 0755
+
+- name: copy awscli config using templates
+  when: aws_installed|failed
+  template:
+    src: awscli_config.j2
+    dest: "{{ ansible_env.HOME }}/.aws/config"
+    owner: "{{ ANSIBLE_USER }}"
+    mode: 0644
+
+- name: copy awscli credentials using templates
+  when: aws_installed|failed
+  template:
+    src: awscli_credentials.j2
+    dest: "{{ ansible_env.HOME }}/.aws/credentials"
+    owner: "{{ ANSIBLE_USER }}"
+    mode: 0644

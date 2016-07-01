@@ -3,13 +3,19 @@
   s3_bucket:
     aws_access_key: "{{ aws_access_key_id }}"
     aws_secret_key: "{{ aws_secret_access_key }}"
-    name: orezi-bucket
+    name: "{{ s3_website_domain }}"
     policy: "{{ lookup('file','policy.json') }}"
 
 - name: upload static website to s3 
   s3:
     bucket=orezi-bucket
-    object=landing.html 
-    src=landing.html 
+    object={{ item }} 
+    src={{ item }} 
     mode=put 
     permission=public-read
+  with_items:
+    - "{{ s3_website_index_document }}"
+    - "{{ s3_website_error_document }}"
+
+- name: setup for website hosting
+  command: "aws s3 website s3://{{ s3_website_domain }}/ --index-document {{ s3_website_index_document }} --error-document {{ s3_website_error_document }}"
