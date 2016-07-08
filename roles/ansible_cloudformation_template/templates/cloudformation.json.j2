@@ -1,0 +1,78 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Building A VPC With CloudFormation",
+  "Resources" : {
+    "{{ vpc_name }}" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "EnableDnsSupport" : "true",
+        "EnableDnsHostnames" : "true",
+        "CidrBlock" : "{{ vpc_cidr_block }}",
+        "Tags" : [ {"Key" : "Name", "Value" : "{{ vpc_name }}"} ]
+      }
+    },
+    "{{ public_subnet }}" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "{{ vpc_name }}" },
+        "CidrBlock" : "{{ public_sub_cidr }}",
+        "Tags" : [ {"Key" : "Name", "Value" : "{{ public_subnet }}"} ]
+      }
+    },
+    "{{ private_subnet }}" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "{{ vpc_name }}" },
+        "CidrBlock" : "{{ private_sub_cidr }}",
+        "Tags" : [ {"Key" : "Name", "Value" : "{{ private_subnet }}"} ]
+      }
+    },
+	  "{{ internet_gw }}" : {
+	    "Type" : "AWS::EC2::InternetGateway"
+	  },
+	  "{{ gateway_to_internet }}" : {
+	    "Type" : "AWS::EC2::VPCGatewayAttachment",
+	    "Properties" : {
+	      "VpcId" : { "Ref" : "{{ vpc_name }}" },
+	      "InternetGatewayId" : { "Ref" : "{{ internet_gw }}" }
+	    }
+	  },
+	  "{{ public_rt }}" : {
+	    "Type" : "AWS::EC2::RouteTable",
+	    "Properties" : {
+	      "VpcId" : { "Ref" : "{{ vpc_name }}" },
+	      "Tags" : [ {"Key" : "Name", "Value" : "{{ public_rt }}"} ]
+	    }
+	  },
+	  "{{ public_route }}" : {
+	    "Type" : "AWS::EC2::Route",
+	    "DependsOn" : "{{ gateway_to_internet }}",
+	    "Properties" : {
+	      "RouteTableId" : { "Ref" : "{{ public_rt }}" },
+	      "DestinationCidrBlock" : "0.0.0.0/0",
+	      "GatewayId" : { "Ref" : "{{ internet_gw }}" }
+	    }
+	  },
+	  "{{ rt_association }}" : {
+	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+	    "Properties" : {
+	      "SubnetId" : { "Ref" : "{{ public_subnet }}" },
+	      "RouteTableId" : { "Ref" : "{{ public_rt }}" }
+	    }
+	  },
+	  "{{ private_instance }}" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "{{ instance_type }}", 
+			  "ImageId" : "{{ image_id }}",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "{{ private_subnet }}" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "{{ private_instance }}"} ]
+			}
+		}
+  }
+}

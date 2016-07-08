@@ -1,0 +1,78 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Building A VPC With CloudFormation",
+  "Resources" : {
+    "oreziVPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "EnableDnsSupport" : "true",
+        "EnableDnsHostnames" : "true",
+        "CidrBlock" : "10.0.0.0/16",
+        "Tags" : [ {"Key" : "Name", "Value" : "oreziVPC"} ]
+      }
+    },
+    "OreziPublicSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "oreziVPC" },
+        "CidrBlock" : "10.0.20.0/24",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicSubnet"} ]
+      }
+    },
+    "OreziPrivateSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "oreziVPC" },
+        "CidrBlock" : "10.0.18.0/24",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPrivateSubnet"} ]
+      }
+    },
+	  "OreziInternetGateway" : {
+	    "Type" : "AWS::EC2::InternetGateway"
+	  },
+	  "OreziGatewayToInternet" : {
+	    "Type" : "AWS::EC2::VPCGatewayAttachment",
+	    "Properties" : {
+	      "VpcId" : { "Ref" : "oreziVPC" },
+	      "InternetGatewayId" : { "Ref" : "OreziInternetGateway" }
+	    }
+	  },
+	  "OreziPublicRouteTable" : {
+	    "Type" : "AWS::EC2::RouteTable",
+	    "Properties" : {
+	      "VpcId" : { "Ref" : "oreziVPC" },
+	      "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicRouteTable"} ]
+	    }
+	  },
+	  "OreziPublicRoute" : {
+	    "Type" : "AWS::EC2::Route",
+	    "DependsOn" : "OreziGatewayToInternet",
+	    "Properties" : {
+	      "RouteTableId" : { "Ref" : "OreziPublicRouteTable" },
+	      "DestinationCidrBlock" : "0.0.0.0/0",
+	      "GatewayId" : { "Ref" : "OreziInternetGateway" }
+	    }
+	  },
+	  "OreziPublicSubnetRouteTableAssociation" : {
+	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+	    "Properties" : {
+	      "SubnetId" : { "Ref" : "OreziPublicSubnet" },
+	      "RouteTableId" : { "Ref" : "OreziPublicRouteTable" }
+	    }
+	  },
+	  "OreziPrivateInstance" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "t2.micro", 
+			  "ImageId" : "ami-6869aa05",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "OreziPrivateSubnet" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "OreziPrivateInstance"} ]
+			}
+		}
+  }
+}
