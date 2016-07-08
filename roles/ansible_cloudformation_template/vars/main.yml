@@ -1,0 +1,2 @@
+---
+cloudformation_template: roles/ansible_cloudformation_template/templates/cloudformation.json
