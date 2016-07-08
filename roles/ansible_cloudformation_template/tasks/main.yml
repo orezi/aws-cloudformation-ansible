@@ -1,4 +1,7 @@
 ---
+- name: convert j2 to json
+  local_action: template src={{ cloudformation_template }}.j2 dest={{ cloudformation_template }}
+
 - name: launch ansible cloudformation template
   cloudformation:
     aws_access_key: "{{ aws_access_key_id }}"
@@ -7,7 +10,7 @@
     state: "present"
     region: "{{ region }}"
     disable_rollback: true
-    template: "cloudformation.template"
+    template: "{{ cloudformation_template }}"
     tags:
       Stack: "{{ cloudformation_name }}"
   register: cloudformation
