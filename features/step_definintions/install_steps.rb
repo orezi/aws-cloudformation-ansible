@@ -1,5 +1,9 @@
 require 'open3'
 
+cloudformation_stack_name = ""
+key_value = ""
+ami_name = ""
+
 When(/^I install boto$/) do
 	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'setup_boto'"
 	output, error, @status = Open3.capture3 "#{cmd}"
@@ -35,11 +39,25 @@ When(/^I compile cloudformation template with jinja$/) do
 end
 
 When(/^I launch cloudformation template$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'launch_cloudformation'"
+	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'cloudformation'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
+And(/^cloudformation stack should be in state: complete$/) do
+  cmd = "aws cloudformation describe-stacks --stack-name #{cloudformation_stack_name}"
+  output, error, status = Open3.capture3 "#{cmd}"
+  json_out = JSON.parse(output)
+  expect(status.success?).to eq(true)
+  expect(json_out["Stacks"][0]["StackStatus"]).to match("CREATE_COMPLETE")
+end
+
 When(/^I create AMI$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'create_ami'"
+	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'cloudformation,create_ami'"
 	output, error, @status = Open3.capture3 "#{cmd}"
+end
+
+And(/^ami should exist$/) do
+  cmd = "aws ec2 describe-images --filters Name=tag-key,Values=#{key_value} Name=tag-value,Values=#{ami_name} --query 'Images[*].{ID:ImageId}' | grep ami"
+  output, error, status = Open3.capture3 "#{cmd}"
+  expect(output).to match("ami*")
 end

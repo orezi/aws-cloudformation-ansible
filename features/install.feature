@@ -27,7 +27,9 @@ Feature: Setup S3 bucket and AWS Architecture
   Scenario: Launch cloudformation template
     When I launch cloudformation template
     Then it should be successful
+    And cloudformation stack should be in state: complete
   
   Scenario: Create Machine Image
     When I create AMI
     Then it should be successful
+    And ami should exist
