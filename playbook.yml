@@ -7,5 +7,3 @@
   - s3
   - ansible_cloudformation_template
   - create_ami
-  - create_launch_cfg
-  - create_asg  

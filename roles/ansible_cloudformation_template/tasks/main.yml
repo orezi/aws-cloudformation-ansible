@@ -1,6 +1,8 @@
 ---
 - name: convert j2 to json
   local_action: template src={{ cloudformation_template }}.j2 dest={{ cloudformation_template }}
+  tags:
+    - convert_jinja
 
 - name: launch ansible cloudformation template
   cloudformation:
@@ -14,3 +16,5 @@
     tags:
       Stack: "{{ cloudformation_name }}"
   register: cloudformation
+  tags:
+    - launch_cloudformation

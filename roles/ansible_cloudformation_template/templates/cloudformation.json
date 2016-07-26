@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "Building A VPC With CloudFormation",
+  "Description" : "Highly available architecture with cloudformation",
   "Resources" : {
     "oreziVPC" : {
       "Type" : "AWS::EC2::VPC",
@@ -11,12 +11,22 @@
         "Tags" : [ {"Key" : "Name", "Value" : "oreziVPC"} ]
       }
     },
-    "OreziPublicSubnet" : {
+    "OreziPublicSubnet1" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : "us-east-1a",
         "VpcId" : { "Ref" : "oreziVPC" },
         "CidrBlock" : "10.0.20.0/24",
-        "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicSubnet"} ]
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicSubnet1"} ]
+      }
+    },
+    "OreziPublicSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "us-east-1c",
+        "VpcId" : { "Ref" : "oreziVPC" },
+        "CidrBlock" : "10.0.16.0/24",
+        "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicSubnet2"} ]
       }
     },
     "OreziPrivateSubnet" : {
@@ -56,10 +66,55 @@
 	  "OreziPublicSubnetRouteTableAssociation" : {
 	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
 	    "Properties" : {
-	      "SubnetId" : { "Ref" : "OreziPublicSubnet" },
+	      "SubnetId" : { "Ref" : "OreziPublicSubnet1" },      
 	      "RouteTableId" : { "Ref" : "OreziPublicRouteTable" }
 	    }
 	  },
+	  "OreziPublicSubnetRouteTableAssociation1" : {
+	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+	    "Properties" : {
+	      "SubnetId" : { "Ref" : "OreziPublicSubnet2" },      
+	      "RouteTableId" : { "Ref" : "OreziPublicRouteTable" }
+	    }
+	  },
+    "oreziSns" : {
+		  "Type" : "AWS::SNS::Topic",
+		  "Properties" : {
+		    "DisplayName" : "oreziSns",
+		    "Subscription" : [{
+			    "Endpoint" : "olarewajuore@gmail.com",
+			    "Protocol" : "email"
+				}],
+		    "TopicName" : "oreziSns"
+		  }
+    },
+    "oreziAsg" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "LaunchConfigurationName" : { "Ref" : "oreziLaunchConfig" },
+        "MinSize" : "1",
+        "MaxSize" : "3",
+        "DesiredCapacity" : "1",
+        "LoadBalancerNames" : [ { "Ref" : "OreziLoadBalancer" } ],
+        "VPCZoneIdentifier" : [ { "Ref" : "OreziPublicSubnet1" }, { "Ref" : "OreziPublicSubnet2" } ],
+        "NotificationConfigurations" : [{
+          "TopicARN" : { "Ref" : "oreziSns" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+           ]
+        }]
+      }
+    },
+    "oreziLaunchConfig": {
+      "Type":"AWS::AutoScaling::LaunchConfiguration",
+      "Properties":{
+        "ImageId":"ami-6869aa05",
+        "InstanceType": "t2.micro"
+      }
+    },
 	  "OreziPrivateInstance" : {
 			"Type" : "AWS::EC2::Instance", 
 			"Properties" : {
@@ -73,6 +128,56 @@
 			  }],
 			  "Tags" : [ {"Key" : "Name", "Value" : "OreziPrivateInstance"} ]
 			}
-		}
+		},
+		"OreziPublicInstance1" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "t2.micro", 
+			  "ImageId" : "ami-6869aa05",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "OreziPublicSubnet1" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicInstance1"} ]
+			}
+		},
+		"OreziPublicInstance2" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "t2.micro", 
+			  "ImageId" : "ami-6869aa05",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "OreziPublicSubnet2" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "OreziPublicInstance2"} ]
+			}
+		},
+		"OreziLoadBalancer" : {
+	    "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+	    "Properties" : {
+	      "Subnets" : [ { "Ref" : "OreziPublicSubnet1" }, { "Ref" : "OreziPublicSubnet2" } ],
+	      "CrossZone" : "True",
+	      "LoadBalancerName" : "OreziCloudformationLb",
+	      "HealthCheck": {
+		      "Target": "TCP:22",
+		      "HealthyThreshold": "10",
+		      "UnhealthyThreshold": "2",
+		      "Interval": "30",
+		      "Timeout": "5"
+		    },
+	      "Instances" : [ { "Ref" : "OreziPublicInstance1" }, { "Ref" : "OreziPublicInstance2" } ],
+	      "Listeners" : [{
+          "LoadBalancerPort" : "80",
+          "InstancePort" : "80",
+          "Protocol" : "TCP"
+        }],
+	      "Tags" : [ {"Key" : "Name", "Value" : "OreziLoadBalancer"}]        
+	    }
+    }
   }
 }

@@ -5,6 +5,8 @@
     aws_secret_key: "{{ aws_secret_access_key }}"
     name: "{{ s3_website_domain }}"
     policy: "{{ lookup('file','policy.json') }}"
+  tags:
+    - create_bucket
 
 - name: upload static website to s3 
   s3:
@@ -16,6 +18,10 @@
   with_items:
     - "{{ s3_website_index_document }}"
     - "{{ s3_website_error_document }}"
+  tags:
+    - upload_static_website
 
 - name: setup for website hosting
   command: "aws s3 website s3://{{ s3_website_domain }}/ --index-document {{ s3_website_index_document }} --error-document {{ s3_website_error_document }}"
+  tags:
+    - setup_hosting

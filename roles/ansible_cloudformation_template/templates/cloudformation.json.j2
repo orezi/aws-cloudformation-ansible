@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "Building A VPC With CloudFormation",
+  "Description" : "Highly available architecture with cloudformation",
   "Resources" : {
     "{{ vpc_name }}" : {
       "Type" : "AWS::EC2::VPC",
@@ -11,12 +11,22 @@
         "Tags" : [ {"Key" : "Name", "Value" : "{{ vpc_name }}"} ]
       }
     },
-    "{{ public_subnet }}" : {
+    "{{ pub_sub_1 }}" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
+        "AvailabilityZone" : "{{ pub_sub_1_zone }}",
         "VpcId" : { "Ref" : "{{ vpc_name }}" },
-        "CidrBlock" : "{{ public_sub_cidr }}",
-        "Tags" : [ {"Key" : "Name", "Value" : "{{ public_subnet }}"} ]
+        "CidrBlock" : "{{ pub_sub_1_cidr }}",
+        "Tags" : [ {"Key" : "Name", "Value" : "{{ pub_sub_1 }}"} ]
+      }
+    },
+    "{{ pub_sub_2 }}" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "AvailabilityZone" : "{{ pub_sub_2_zone }}",
+        "VpcId" : { "Ref" : "{{ vpc_name }}" },
+        "CidrBlock" : "{{ pub_sub_2_cidr }}",
+        "Tags" : [ {"Key" : "Name", "Value" : "{{ pub_sub_2 }}"} ]
       }
     },
     "{{ private_subnet }}" : {
@@ -56,10 +66,55 @@
 	  "{{ rt_association }}" : {
 	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
 	    "Properties" : {
-	      "SubnetId" : { "Ref" : "{{ public_subnet }}" },
+	      "SubnetId" : { "Ref" : "{{ pub_sub_1 }}" },      
 	      "RouteTableId" : { "Ref" : "{{ public_rt }}" }
 	    }
 	  },
+	  "{{ rt_association_1 }}" : {
+	    "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+	    "Properties" : {
+	      "SubnetId" : { "Ref" : "{{ pub_sub_2 }}" },      
+	      "RouteTableId" : { "Ref" : "{{ public_rt }}" }
+	    }
+	  },
+    "{{ sns_name }}" : {
+		  "Type" : "AWS::SNS::Topic",
+		  "Properties" : {
+		    "DisplayName" : "{{ sns_name }}",
+		    "Subscription" : [{
+			    "Endpoint" : "{{ sns_endpoint }}",
+			    "Protocol" : "{{ sns_protocol }}"
+				}],
+		    "TopicName" : "{{ sns_name }}"
+		  }
+    },
+    "{{ autoscaling_grp }}" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "LaunchConfigurationName" : { "Ref" : "{{ launch_cfg_name }}" },
+        "MinSize" : "{{ min_size }}",
+        "MaxSize" : "{{ max_size }}",
+        "DesiredCapacity" : "{{ desired_capacity }}",
+        "LoadBalancerNames" : [ { "Ref" : "{{ load_balancer }}" } ],
+        "VPCZoneIdentifier" : [ { "Ref" : "{{ pub_sub_1 }}" }, { "Ref" : "{{ pub_sub_2 }}" } ],
+        "NotificationConfigurations" : [{
+          "TopicARN" : { "Ref" : "{{ sns_name }}" },
+          "NotificationTypes" : [
+            "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+           ]
+        }]
+      }
+    },
+    "{{ launch_cfg_name }}": {
+      "Type":"AWS::AutoScaling::LaunchConfiguration",
+      "Properties":{
+        "ImageId":"{{ image_id }}",
+        "InstanceType": "{{ instance_type }}"
+      }
+    },
 	  "{{ private_instance }}" : {
 			"Type" : "AWS::EC2::Instance", 
 			"Properties" : {
@@ -73,6 +128,56 @@
 			  }],
 			  "Tags" : [ {"Key" : "Name", "Value" : "{{ private_instance }}"} ]
 			}
-		}
+		},
+		"{{ pub_instance_1 }}" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "{{ instance_type }}", 
+			  "ImageId" : "{{ image_id }}",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "{{ pub_sub_1 }}" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "{{ pub_instance_1 }}"} ]
+			}
+		},
+		"{{ pub_instance_2 }}" : {
+			"Type" : "AWS::EC2::Instance", 
+			"Properties" : {
+			  "InstanceType" : "{{ instance_type }}", 
+			  "ImageId" : "{{ image_id }}",
+			  "NetworkInterfaces" : [{ 
+			    "AssociatePublicIpAddress" : false, 
+			    "DeviceIndex" : "0",
+			    "DeleteOnTermination" : true,
+			    "SubnetId" : { "Ref" : "{{ pub_sub_2 }}" }
+			  }],
+			  "Tags" : [ {"Key" : "Name", "Value" : "{{ pub_instance_2 }}"} ]
+			}
+		},
+		"{{ load_balancer }}" : {
+	    "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+	    "Properties" : {
+	      "Subnets" : [ { "Ref" : "{{ pub_sub_1 }}" }, { "Ref" : "{{ pub_sub_2 }}" } ],
+	      "CrossZone" : "{{ crosszone }}",
+	      "LoadBalancerName" : "{{ loadbalancername }}",
+	      "HealthCheck": {
+		      "Target": "TCP:22",
+		      "HealthyThreshold": "10",
+		      "UnhealthyThreshold": "2",
+		      "Interval": "30",
+		      "Timeout": "5"
+		    },
+	      "Instances" : [ { "Ref" : "{{ pub_instance_1 }}" }, { "Ref" : "{{ pub_instance_2 }}" } ],
+	      "Listeners" : [{
+          "LoadBalancerPort" : "{{ load_balancer_port }}",
+          "InstancePort" : "{{ instance_port }}",
+          "Protocol" : "{{ protocol }}"
+        }],
+	      "Tags" : [ {"Key" : "Name", "Value" : "{{ load_balancer }}"}]        
+	    }
+    }
   }
 }
