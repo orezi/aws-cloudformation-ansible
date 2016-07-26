@@ -42,6 +42,7 @@
 	  },
 	  "{{ gateway_to_internet }}" : {
 	    "Type" : "AWS::EC2::VPCGatewayAttachment",
+	    "DependsOn" : [ "{{ internet_gw }}", "{{ vpc_name }}" ],
 	    "Properties" : {
 	      "VpcId" : { "Ref" : "{{ vpc_name }}" },
 	      "InternetGatewayId" : { "Ref" : "{{ internet_gw }}" }

@@ -2,7 +2,7 @@
 - name: check if image exists
   command: bash -c "aws ec2 describe-images --filters Name=tag-key,Values=Name Name=tag-value,Values={{ ami_name }} --query 'Images[*].{ID:ImageId}' | grep ami"
   register: image_exists
-  ignore_errors: true
+  ignore_errors: True
   tags:
     - create_ami
 
@@ -11,7 +11,7 @@
   ec2_ami:
     aws_access_key: "{{ aws_access_key_id }}"
     aws_secret_key: "{{ aws_secret_access_key }}"
-    instance_id: "{{cloudformation.stack_resources[3].physical_resource_id}}"
+    instance_id: "{{ cloudformation.stack_resources[3].physical_resource_id }}"
     wait: yes
     name: "{{ ami_name }}"
     state: present 

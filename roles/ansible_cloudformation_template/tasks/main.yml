@@ -17,4 +17,4 @@
       Stack: "{{ cloudformation_name }}"
   register: cloudformation
   tags:
-    - launch_cloudformation
+    - cloudformation

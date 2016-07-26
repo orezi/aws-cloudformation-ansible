@@ -42,6 +42,7 @@
 	  },
 	  "OreziGatewayToInternet" : {
 	    "Type" : "AWS::EC2::VPCGatewayAttachment",
+	    "DependsOn" : [ "OreziInternetGateway", "oreziVPC" ],
 	    "Properties" : {
 	      "VpcId" : { "Ref" : "oreziVPC" },
 	      "InternetGatewayId" : { "Ref" : "OreziInternetGateway" }
