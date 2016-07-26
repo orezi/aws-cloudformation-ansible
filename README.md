@@ -42,8 +42,32 @@ image_id: "ami-YOURID"
 vpc_cidr_block: "VPCCIDRBLOCK"
 public_sub_cidr: "PUBLICSUBNETCIDRBLOCK"
 private_sub_cidr: "PRIVATESUBNETCIDRBLOCK"
+pub_sub_1_zone: "zoneA"
+pub_sub_2_zone: "zoneB"
+load_balancer: "LOADBALANCER"
+load_balancer_port: "PORT"
+instance_port: "INSTANCE PORT"
+protocol: "PROTOCOL"
+crosszone: true
+loadbalancername: "LOADBALANCER"
+sns_name: "TOPIC"
+sns_endpoint: "EMAIL"
+sns_protocol: ""
+min_size: ""
+max_size: ""
+desired_capacity: ""
 ```
 
 This file **SHOULD NOT** be public
 
 **RUN** `ansible-playbook playbook.yml -f 10`
+
+**TO TEST**
+cd into features/install.steps.rb
+
+Fill in the variable values in the install.steps.rb file. example:
+cloudformation_stack_name = ""
+key_value = ""
+ami_name = ""
+
+**Then RUN** cucumber featuers/install.feature
