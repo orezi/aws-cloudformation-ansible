@@ -22,3 +22,8 @@
   register: instance
   tags:
     - create_ami
+
+- pause: prompt="Waiting for ami to register" seconds=90
+  when: image_exists|failed
+  tags:
+    - pause

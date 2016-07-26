@@ -5,7 +5,7 @@ key_value = ""
 ami_name = ""
 
 When(/^I install boto$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'setup_boto'"
+	cmd = "ansible-playbook playbook.yml --tags 'setup_boto'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
@@ -14,32 +14,32 @@ Then(/^it should be successful$/) do
 end
 
 When(/^I setup aws account$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'setup_aws_account'"
+	cmd = "ansible-playbook playbook.yml --tags 'setup_aws_account'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
 When(/^I create S3 bucket$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'create_bucket'"
+	cmd = "ansible-playbook playbook.yml --tags 'create_bucket'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
 When(/^I upload static files to website$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'upload_static_website'"
+	cmd = "ansible-playbook playbook.yml --tags 'upload_static_website'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
 When(/^I setup s3 bucket for hosting$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'setup_hosting'"
+	cmd = "ansible-playbook playbook.yml --tags 'setup_hosting'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
 When(/^I compile cloudformation template with jinja$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'convert_jinja'"
+	cmd = "ansible-playbook playbook.yml --tags 'convert_jinja'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
 When(/^I launch cloudformation template$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'cloudformation'"
+	cmd = "ansible-playbook playbook.yml --tags 'cloudformation'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
@@ -52,7 +52,7 @@ And(/^cloudformation stack should be in state: complete$/) do
 end
 
 When(/^I create AMI$/) do
-	cmd = "ansible-playbook -i inventory.ini playbook.yml --tags 'cloudformation,create_ami'"
+	cmd = "ansible-playbook playbook.yml --tags 'cloudformation,create_ami,pause'"
 	output, error, @status = Open3.capture3 "#{cmd}"
 end
 
